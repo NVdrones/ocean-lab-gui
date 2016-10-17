@@ -89,11 +89,20 @@ class StartPage(tk.Frame):
 		launchButton1 = tk.Button(commandButtonWidget1, text = "Launch Vehicle", font = LARGE_FONT, command = self.v1Commands.launch, height = 1, width = 15)
 		launchButton1.grid(row=1, column=1)
 
-		hoverButton1 = tk.Button(commandButtonWidget1, text = "Hover Vehicle", font = LARGE_FONT, command = self.v1Commands.hover, height = 1, width = 15)
-		hoverButton1.grid(row=2, column=1)
+		modeButton1 = tk.Button(commandButtonWidget1, text = "FlightMode", font = LARGE_FONT, command = self.v1Commands.flightMode, height = 1, width = 15)
+		modeButton1.grid(row=2, column=1)
 
 		landButton1 = tk.Button(commandButtonWidget1, text = "Land Vehicle", font = LARGE_FONT, command = self.v1Commands.land, height = 1, width = 15)
 		landButton1.grid(row=3, column=1)
+
+		eLandButton1 = tk.Button(commandButtonWidget1, text = "E-Land Vehicle", font = LARGE_FONT, command = self.v1Commands.eLand, height = 1, width = 15)
+		eLandButton1.grid(row=4, column=1)
+
+		manualButton1 = tk.Button(commandButtonWidget1, text = "Start Manual Mode", font = LARGE_FONT, command = self.v1Commands.manualMode, height = 1, width = 15)
+		manualButton1.grid(row=5, column=1)
+
+		holdButton1 = tk.Button(commandButtonWidget1, text = "Loiter Mode", font = LARGE_FONT, command = self.v1Commands.hold, height = 1, width = 15)
+		holdButton1.grid(row=6, column=1)
 
 		#create horizontal position arrow container
 		arrowWidget1 = tk.Frame(self, width=250, heigh=250)
@@ -158,11 +167,20 @@ class StartPage(tk.Frame):
 		launchButton2 = tk.Button(commandButtonWidget2, text = "Launch Vehicle", font = LARGE_FONT, command = self.v2Commands.launch, height = 1, width = 15)
 		launchButton2.grid(row=1, column=1)
 
-		hoverButton2 = tk.Button(commandButtonWidget2, text = "Hover Vehicle", font = LARGE_FONT, command = self.v2Commands.hover, height = 1, width = 15)
-		hoverButton2.grid(row=2, column=1)
+		modeButton2 = tk.Button(commandButtonWidget2, text = "Flight Mode", font = LARGE_FONT, command = self.v2Commands.flightMode, height = 1, width = 15)
+		modeButton2.grid(row=2, column=1)
 
 		landButton2 = tk.Button(commandButtonWidget2, text = "Land Vehicle", font = LARGE_FONT, command = self.v2Commands.land, height = 1, width = 15)
 		landButton2.grid(row=3, column=1)
+
+		eLandButton2 = tk.Button(commandButtonWidget2, text = "E-Land Vehicle", font = LARGE_FONT, command = self.v2Commands.eLand, height = 1, width = 15)
+		eLandButton2.grid(row=4, column=1)
+
+		manualButton2 = tk.Button(commandButtonWidget2, text = "Start Manual Mode", font = LARGE_FONT, command = self.v2Commands.manualMode, height = 1, width = 15)
+		manualButton2.grid(row=5, column=1)
+
+		holdButton2 = tk.Button(commandButtonWidget2, text = "Loiter Mode", font = LARGE_FONT, command = self.v2Commands.hold, height = 1, width = 15)
+		holdButton2.grid(row=6, column=1)
 
 		#create horizontal position arrow container
 		arrowWidget2 = tk.Frame(self, width=250, heigh=250)
@@ -214,11 +232,20 @@ class StartPage(tk.Frame):
 		launchButton3 = tk.Button(commandButtonWidget3, text = "Launch Vehicle", font = LARGE_FONT, command = self.v3Commands.launch, height = 1, width = 15)
 		launchButton3.grid(row=1, column=1)
 
-		hoverButton3 = tk.Button(commandButtonWidget3, text = "Hover Vehicle", font = LARGE_FONT, command = self.v3Commands.hover, height = 1, width = 15)
-		hoverButton3.grid(row=2, column=1)
+		modeButton3 = tk.Button(commandButtonWidget3, text = "Flight Mode", font = LARGE_FONT, command = self.v3Commands.flightMode, height = 1, width = 15)
+		modeButton3.grid(row=2, column=1)
 
 		landButton3 = tk.Button(commandButtonWidget3, text = "Land Vehicle", font = LARGE_FONT, command = self.v3Commands.land, height = 1, width = 15)
 		landButton3.grid(row=3, column=1)
+
+		eLandButton3 = tk.Button(commandButtonWidget3, text = "E-Land Vehicle", font = LARGE_FONT, command = self.v3Commands.eLand, height = 1, width = 15)
+		eLandButton3.grid(row=4, column=1)
+
+		manualButton3 = tk.Button(commandButtonWidget3, text = "Start Manual Mode", font = LARGE_FONT, command = self.v3Commands.manualMode, height = 1, width = 15)
+		manualButton3.grid(row=5, column=1)
+
+		holdButton3 = tk.Button(commandButtonWidget3, text = "Loiter Mode", font = LARGE_FONT, command = self.v3Commands.hold, height = 1, width = 15)
+		holdButton3.grid(row=6, column=1)
 
 		#create horizontal position arrow container
 		arrowWidget3 = tk.Frame(self, width=250, heigh=250)
@@ -308,47 +335,132 @@ class StartPage(tk.Frame):
 	    return result
 
 class vehicleCommands():
+	
 
 	def __init__(self, vehicleNumber, serialObject):
+		self.currentFlightMode = 0
 		self.serialObject = serialObject
 		self.vehicleNumber = vehicleNumber
 
+		self.takeoffID = 1
+		self.landID = 2
+		self.eLandID = 3
+		self.holdID = 4
+		self.manualID = 5
+		self.NSMoveID = 6
+		self.EWMoveID = 7
+		self.vectorFBID = 8
+		self.vectorLRID = 9
+		self.upDownID = 10
+		self.localityID = 11
+		self.powerID = 12
+
 	def launch(self):
-		launchPacket = struct.pack('HB', 12, 3)
-		self.sendPacket(launchPacket, 3)
+		launchPacket = struct.pack('B', self.vehicleNumber)
+		launchPacket += struct.pack('B', self.takeoffID)
+		self.sendPacket(launchPacket, 2)
 		print("launching vehicle: ")
 
 	def land(self):
-		self.landPacket = payload()
+		landPacket = struct.pack('B', self.vehicleNumber)
+		landPacket += struct.pack('B', self.landID)
+		self.sendPacket(landPacket, 2)
 		print("landing vehicle: ")
 
-	def hover(slef):
-		self.hoverPacket = payload()
-		print("hover")
+	def eLand(self):
+		eLandPacket = struct.pack('B', self.vehicleNumber)
+		eLandPacket += struct.pack('B', self.eLandID)
+		self.sendPacket(eLandPacket, 2)
+		print("landing vehicle: ")
+
+	def flightMode(self):
+
+		if self.currentFlightMode == 0:
+			self.currentFlightMode = 1
+		else:
+			self.currentFlightMode = 0
+
+		print("changing flight mode")
+
+	def manualMode(self):
+		manualModePacket = struct.pack('B', self.vehicleNumber)
+		manualModePacket += struct.pack('B', self.manualID)
+		self.sendPacket(manualModePacket, 2)
+		print("switched to manual mode")
+
+	def hold(self):
+		holdPacket = struct.pack('B', self.vehicleNumber)
+		holdPacket += struct.pack('B', self.holdID)
+		self.sendPacket(holdPacket, 2)
 
 	def forward(self):
-		self.forwardPacket = payload()
-		print("moving forward")
+		if self.currentFlightMode == 0:
+			forwardPacket = struct.pack('B', self.vehicleNumber)
+			forwardPacket += struct.pack('B', self.NSMoveID)
+			forwardPacket += struct.pack('B', 1)
+			self.sendPacket(forwardPacket, 3)
+			print("moving forward global")
+		else:
+			vectorFBPacket = struct.pack('B', self.vehicleNumber)
+			vectorFBPacket += struct.pack('B', self.vectorFBID)
+			vectorFBPacket += struct.pack('B', 1)
+			self.sendPacket(vectorFBPacket, 3)
+			print("moving forward vector")
+
 
 	def back(self):
-		self.backPacket = payload()
-		print("moving back")
+		if self.currentFlightMode == 0:
+			forwardPacket = struct.pack('B', self.vehicleNumber)
+			forwardPacket += struct.pack('B', self.NSMoveID)
+			forwardPacket += struct.pack('B', 0)
+			self.sendPacket(launchPacket, 3)
+			print("moving backward global")
+		else:
+			vectorFBPacket = struct.pack('B', self.vehicleNumber)
+			vectorFBPacket += struct.pack('B', self.vectorFBID)
+			vectorFBPacket += struct.pack('B', 0)
+			self.sendPacket(vectorFBPacket, 3)
+			print("moving backward vector")
 
 	def left(self):
-		self.leftPacket = payload()
-		print("moving left")
+		if self.currentFlightMode == 0:
+			leftPacket = struct.pack('B', self.vehicleNumber)
+			leftPacket += struct.pack('B', self.EWMoveID)
+			leftPacket += struct.pack('B', 0)
+			self.sendPacket(leftPacket, 3)
+			print("moving left Global")
+		else:
+			leftPacket = struct.pack('B', self.vehicleNumber)
+			leftPacket += struct.pack('B', self.vectorLRID)
+			leftPacket += struct.pack('B', 0)
+			self.sendPacket(leftPacket, 3)
+			print("moving left vector")
 
 	def right(self):
-		self.rightPacket = payload()
-		print("moving right")
+		if self.currentFlightMode == 0:
+			rightPacket = struct.pack('B', self.vehicleNumber)
+			rightPacket += struct.pack('B', self.EWMoveID)
+			rightPacket += struct.pack('B', 1)
+			self.sendPacket(rightPacket, 3)
+			print("moving right Global")
+		else:
+			rightPacket = struct.pack('B', self.vehicleNumber)
+			rightPacket += struct.pack('B', self.vectorLRID)
+			rightPacket += struct.pack('B', 1)
+			self.sendPacket(rightPacket, 3)
+			print("moving right vector")
 
 	def up(self):
-		self.upPacket = payload()
-		print("moving up")
+		upPacket = struct.pack('B', self.vehicleNumber)
+		upPacket += struct.pack('B', self.upDownID)
+		upPacket += struct.pack('B', 1)
+		self.sendPacket(upPacket, 3)
 
 	def down(self):
-		self.downPacket = payload()
-		print("moving down")
+		downPacket = struct.pack('B', self.vehicleNumber)
+		downPacket += struct.pack('B', self.upDownID)
+		downPacket += struct.pack('B', 0)
+		self.sendPacket(downPacket, 3)
 
 	def sendPacket(self, payload, size):
 		packet = ''
