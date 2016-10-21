@@ -47,10 +47,7 @@ class SwarmApp(tk.Tk):
 		self.vehicle1Percent = tk.StringVar()
 		self.vehicle2Percent = tk.StringVar()
 		self.vehicle3Percent = tk.StringVar()
-		self.vehcileFlightMode = []
-		self.vehicleFlightMode[0] = tk.StringVar()
-		self.vehicleFlightMode[1] = tk.StringVar()
-		self.vehicleFlightMode[2] = tk.StringVar()
+		self.vehicleFlightMode = [tk.StringVar(), tk.StringVar(), tk.StringVar()]
 		self.vehicle1Lat.set("Latitude: ")	
 		self.vehicle2Lat.set("Latitude: ")										
 		self.vehicle3Lat.set("Latitude: ")
@@ -526,7 +523,7 @@ class vehicleCommands():
 
 	def __init__(self, vehicleNumber, serialObject, controller):
 		self.senderID = 0
-		self.currentFlightMode = [0, 0, 0]
+		self.currentFlightMode = 0
 		self.serialObject = serialObject
 		self.vehicleNumber = vehicleNumber
 		self.controller = controller
@@ -600,7 +597,7 @@ class vehicleCommands():
 		else:
 			vectorFBPacket = struct.pack('B', self.vehicleNumber)
 			vectorFBPacket += struct.pack('B', self.vectorFBID)
-			vectorFBacket += struct.pack('B', self.senderID)
+			vectorFBPacket += struct.pack('B', self.senderID)
 			vectorFBPacket += struct.pack('B', 1)
 			self.sendPacket(vectorFBPacket, 4)
 			print("moving forward vector")
@@ -610,9 +607,9 @@ class vehicleCommands():
 		if self.currentFlightMode == 0:
 			forwardPacket = struct.pack('B', self.vehicleNumber)
 			forwardPacket += struct.pack('B', self.NSMoveID)
-			forwardacket += struct.pack('B', self.senderID)
+			forwardPacket += struct.pack('B', self.senderID)
 			forwardPacket += struct.pack('B', 0)
-			self.sendPacket(launchPacket, 4)
+			self.sendPacket(forwardPacket, 4)
 			print("moving backward global")
 		else:
 			vectorFBPacket = struct.pack('B', self.vehicleNumber)
@@ -659,6 +656,7 @@ class vehicleCommands():
 		upPacket += struct.pack('B', self.upDownID)
 		upPacket += struct.pack('B', self.senderID)
 		upPacket += struct.pack('B', 1)
+		print("moving up")
 		self.sendPacket(upPacket, 4)
 
 	def down(self):
@@ -666,6 +664,7 @@ class vehicleCommands():
 		downPacket += struct.pack('B', self.upDownID)
 		downPacket += struct.pack('B', self.senderID)
 		downPacket += struct.pack('B', 0)
+		print("moving down")
 		self.sendPacket(downPacket, 4)
 
 	def sendPacket(self, payload, size):
