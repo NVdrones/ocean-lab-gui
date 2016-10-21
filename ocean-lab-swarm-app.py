@@ -6,6 +6,7 @@ import serial as serial
 import atexit
 import struct 
 from PyCRC.CRCCCITT import CRCCCITT
+import queue
 
 LARGE_FONT = ("Verdana", 12)
 
@@ -27,6 +28,51 @@ class SwarmApp(tk.Tk):
 		container.grid_rowconfigure(0, weight=1)
 		container.grid_columnconfigure(0, weight=1)
 
+		###########where all of the label variables are setup
+		self.vehicle1Lat = tk.StringVar()
+		self.vehicle2Lat = tk.StringVar()
+		self.vehicle3Lat = tk.StringVar()
+		self.vehicle1Long = tk.StringVar()
+		self.vehicle2Long = tk.StringVar()
+		self.vehicle3Long = tk.StringVar()
+		self.vehicle1Alt = tk.StringVar()
+		self.vehicle2Alt = tk.StringVar()
+		self.vehicle3Alt = tk.StringVar()
+		self.vehicle1Voltage = tk.StringVar()
+		self.vehicle2Voltage = tk.StringVar()
+		self.vehicle3Voltage = tk.StringVar()
+		self.vehicle1Current = tk.StringVar()
+		self.vehicle2Current = tk.StringVar()
+		self.vehicle3Current = tk.StringVar()
+		self.vehicle1Percent = tk.StringVar()
+		self.vehicle2Percent = tk.StringVar()
+		self.vehicle3Percent = tk.StringVar()
+		self.vehcileFlightMode = []
+		self.vehicleFlightMode[0] = tk.StringVar()
+		self.vehicleFlightMode[1] = tk.StringVar()
+		self.vehicleFlightMode[2] = tk.StringVar()
+		self.vehicle1Lat.set("Latitude: ")	
+		self.vehicle2Lat.set("Latitude: ")										
+		self.vehicle3Lat.set("Latitude: ")
+		self.vehicle1Long.set("Longitude: ")
+		self.vehicle2Long.set("Longitude: ")
+		self.vehicle3Long.set("Longitude: ")
+		self.vehicle1Alt.set("Altitude: ")
+		self.vehicle2Alt.set("Altitude: ")
+		self.vehicle3Alt.set("Altitude: ")
+		self.vehicle1Voltage.set("Voltage: ")
+		self.vehicle2Voltage.set("Voltage: ")
+		self.vehicle3Voltage.set("Voltage: ")
+		self.vehicle1Current.set("Current: ")
+		self.vehicle2Current.set("Current: ")
+		self.vehicle3Current.set("Current: ")
+		self.vehicle1Percent.set("Battery Percent: ")
+		self.vehicle2Percent.set("Battery Percent: ")
+		self.vehicle3Percent.set("Battery Percent: ")
+		self.vehicleFlightMode[0].set("Flight Mode: Global")
+		self.vehicleFlightMode[1].set("Flight Mode: Global")
+		self.vehicleFlightMode[2].set("Flight Mode: Global")
+
 		#setup the serial port
 		try:
 			self.uart = serial.Serial()
@@ -47,6 +93,12 @@ class SwarmApp(tk.Tk):
 		#add exit handlers to execute when program is terminated
 		atexit.register(self.serialExitHandler)
 
+		#a serial buffer used to process incoming packets
+		self.serialBuffer = []
+
+
+
+
 	def show_frame(self, cont):
 		frame = self.frames[cont]
 		frame.tkraise()
@@ -58,10 +110,124 @@ class SwarmApp(tk.Tk):
 		else: 
 			print("no serial port needed to be closed")
 
+	def readByte(self):
+		if self.uart.is_open:
+			if self.uart.in_waiting > 0:
+				readByte = self.uart.read(size=1)
+				self.serialBuffer.append(readByte)
+
+	def processPackets(self):
+		#only check for a valid packet if data is in the buffer
+		if len(self.serialBuffer) >= 1:
+			#check for start of packet A
+			SOPA = struct.unpack('B', self.serialBuffer[0])			
+			if SOPA[0] != 172:
+				print("Bad SOPA: %x" %SOPA[0])
+				#if packet is not valid remove data from buffer
+				del self.serialBuffer[0]
+			#if start of packet A was present look for 
+			#start of packet B if there are 2 bytes present
+			elif len(self.serialBuffer) >= 2:
+				#check for start of packet B
+				SOPB = struct.unpack('B', self.serialBuffer[1])
+				if SOPB[0] != 50:
+					print("Bad SOPB: ") 
+					#if packet is not valid remove all checked data
+					del self.serialBuffer[0:1]
+				#if start of packet was valid look to see if length data is present
+				elif len(self.serialBuffer) >= 5:
+					#if length data is present then wait until entire message is present
+					length = struct.unpack('B', self.serialBuffer[3])
+					print("length")
+					print(length)
+					if len(self.serialBuffer) >= (8 + length[0]):
+						#check for a valid end of packet byte
+						EOP = struct.unpack('B', self.serialBuffer[7+length[0]])
+						print("EOP")
+						print(EOP[0])
+						if EOP[0] == 3:
+							#calculate the packets crc (will implement at a later date)
+							messageType = struct.unpack('B', self.serialBuffer[2])
+							messagePayload = self.serialBuffer[5:(5+length[0])]
+							#route the packet
+							self.routePacket(messageType[0], messagePayload)
+							#remove packet from buffer
+							del self.serialBuffer[0:(8+length[0])]
+
+						#if it was a bad packet delete the entire data worth of the 
+						else:
+							del self.serialBuffer[0:(8 + length[0])]
+							print("bad end of packet character %x" %EOP[0])
+
+	def routePacket(self, messageType, payload):
+		if messageType == 40:
+			print("got NVdrones packet")
+			temp = struct.unpack('B', payload[2])
+			droneID = temp[0]
+			temp = struct.unpack('B', payload[1])
+			messageID = temp[0]
+			if messageID == 11:
+				#handle locality packet
+				print("got locality packet")
+				#try:
+				latitude = struct.unpack('i', payload[3] + payload[4] + payload[5] + payload[6])
+				longitude = struct.unpack('i', payload[7] + payload[8] + payload[9] + payload[10])
+				altitude = struct.unpack('I', payload[11] + payload[12] + payload[13] + payload[14])
+				latitudeFloat = latitude[0]/10000000.0
+				longitudeFloat = longitude[0]/10000000.0
+				altitudeFloat = altitude[0]/1000.0
+				if droneID == 1:
+					self.vehicle1Lat.set("Latitude: %f" %latitudeFloat)	
+					self.vehicle1Long.set("Longitude: %f " %longitudeFloat)
+					self.vehicle1Alt.set("Altitude: %.1fm" %altitudeFloat)
+				elif droneID == 2:
+					self.vehicle2Lat.set("Latitude: %f" %latitudeFloat)	
+					self.vehicle2Long.set("Longitude: %f" %longitudeFloat)	
+					self.vehicle2Alt.set("Altitude: %.1fm" %altitudeFloat)	
+				elif droneID == 3:
+					self.vehicle3Lat.set("Latitude: %f" %latitudeFloat)	
+					self.vehicle3Long.set("Longitude: %f" %longitudeFloat)	
+					self.vehicle3Alt.set("Altitude: %.1fm" %altitudeFloat)	
+				#except:
+				#	print("bad payload information")
+			elif messageID == 12:
+				#handle power packet
+				print("got power packet")
+				#try: 
+				voltage = struct.unpack('H', payload[3] + payload[4])
+				current = struct.unpack('h', payload[5] + payload[6])
+				percentage = struct.unpack('b', payload[7])
+				voltageFloat = voltage[0]/1000.0
+				currentFloat = current[0]/1000.0
+				print(voltageFloat)
+				if droneID == 1:
+					self.vehicle1Voltage.set("Voltage: %fV" %voltageFloat)
+					self.vehicle1Current.set("Current: %.2fA" %currentFloat)
+					self.vehicle1Percent.set("Battery Percent: %i" %percentage[0])
+
+				elif droneID == 2:
+					self.vehicle2Voltage.set("Voltage: %.2fV" %voltageFloat)
+					self.vehicle2Current.set("Current: %.2fA" %currentFloat)
+					self.vehicle2Percent.set("Battery Percent: %i" %percentage[0])
+
+				elif droneID == 3:
+					self.vehicle3Voltage.set("Voltage: %.2fV" %voltageFloat)
+					self.vehicle3Current.set("Current: %.2fA" %currentFloat)
+					self.vehicle3Percent.set("Battery Percent: %i" %percentage[0])
+
+				#except:
+				#	print("bad payload information")
+
+
+
+					
+
 class StartPage(tk.Frame):
 	
 	def __init__(self, parent, controller):
 		self.controller = controller
+
+
 		#set up all images used 
 		self.forwardArrow = tk.PhotoImage(file="Media/forward arrow.gif")
 		self.backArrow = tk.PhotoImage(file="Media/back arrow.gif")
@@ -71,9 +237,9 @@ class StartPage(tk.Frame):
 		self.downArrow = tk.PhotoImage(file="Media/down arrow.gif")
 
 		#create serial object to handle sending commands to swarm box
-		self.v1Commands = vehicleCommands(1, controller.uart)
-		self.v2Commands = vehicleCommands(2, controller.uart)
-		self.v3Commands = vehicleCommands(3, controller.uart)
+		self.v1Commands = vehicleCommands(1, controller.uart, controller)
+		self.v2Commands = vehicleCommands(2, controller.uart, controller)
+		self.v3Commands = vehicleCommands(3, controller.uart, controller)
 
 		#create a Frame for the current Page
 		tk.Frame.__init__(self, parent)
@@ -134,14 +300,20 @@ class StartPage(tk.Frame):
 		status1Container = tk.Frame(self, width=150, height=500)
 		status1Container.grid(row=2, column = 4, padx=(80, 0))
 
-		vehicle1BatteryLabel = tk.Label(status1Container, text="Battery Voltage: 12.4V", font = LARGE_FONT)
-		vehicle1BatteryLabel.grid(row=1, column=1, sticky=tk.W)
-		vehicle1AltitudeLabel = tk.Label(status1Container, text="Altitude: 12m", font = LARGE_FONT)
-		vehicle1AltitudeLabel.grid(row=2, column=1, sticky=tk.W)
-		vehicle1LongLabel = tk.Label(status1Container, text="Longitude: -118.123432", font = LARGE_FONT)
-		vehicle1LongLabel.grid(row=3, column=1, sticky=tk.W)
-		vehicle1LatLabel = tk.Label(status1Container, text="Latitude: 35.234295", font = LARGE_FONT)
-		vehicle1LatLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle1BatteryVoltageLabel = tk.Label(status1Container, textvariable=controller.vehicle1Voltage, font = LARGE_FONT)
+		vehicle1BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
+		vehicle1BatteryCurrentLabel = tk.Label(status1Container, textvariable=controller.vehicle1Current, font = LARGE_FONT)
+		vehicle1BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
+		vehicle1BatteryPercentLabel = tk.Label(status1Container, textvariable=controller.vehicle1Percent, font = LARGE_FONT)
+		vehicle1BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
+		vehicle1AltitudeLabel = tk.Label(status1Container, textvariable=controller.vehicle1Alt, font = LARGE_FONT)
+		vehicle1AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle1LongLabel = tk.Label(status1Container, textvariable=controller.vehicle1Long, font = LARGE_FONT)
+		vehicle1LongLabel.grid(row=5, column=1, sticky=tk.W)
+		vehicle1LatLabel = tk.Label(status1Container, textvariable=controller.vehicle1Lat, font = LARGE_FONT)
+		vehicle1LatLabel.grid(row=6, column=1, sticky=tk.W)
+		vehicle1ModeLabel = tk.Label(status1Container, textvariable=controller.vehicleFlightMode[0], font = LARGE_FONT)
+		vehicle1ModeLabel.grid(row=7, column=1, sticky=tk.W)
 
 		#create a container for the Serial Information
 		serialContainer = tk.Frame(self, width=150, height=500)
@@ -212,14 +384,20 @@ class StartPage(tk.Frame):
 		status2Container = tk.Frame(self, width=150, height=500)
 		status2Container.grid(row=4, column = 4, padx=(80, 0))
 
-		vehicle2BatteryLabel = tk.Label(status2Container, text="Battery Voltage: 12.4V", font = LARGE_FONT)
-		vehicle2BatteryLabel.grid(row=1, column=1, sticky=tk.W)
-		vehicle2AltitudeLabel = tk.Label(status2Container, text="Altitude: 12m", font = LARGE_FONT)
-		vehicle2AltitudeLabel.grid(row=2, column=1, sticky=tk.W)
-		vehicle2LongLabel = tk.Label(status2Container, text="Longitude: -118.123432", font = LARGE_FONT)
-		vehicle2LongLabel.grid(row=3, column=1, sticky=tk.W)
-		vehicle2LatLabel = tk.Label(status2Container, text="Latitude: 35.234295", font = LARGE_FONT)
-		vehicle2LatLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle2BatteryVoltageLabel = tk.Label(status2Container, textvariable=controller.vehicle2Voltage, font = LARGE_FONT)
+		vehicle2BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
+		vehicle2BatteryCurrentLabel = tk.Label(status2Container, textvariable=controller.vehicle2Current, font = LARGE_FONT)
+		vehicle2BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
+		vehicle2BatteryPercentLabel = tk.Label(status2Container, textvariable=controller.vehicle2Percent, font = LARGE_FONT)
+		vehicle2BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
+		vehicle2AltitudeLabel = tk.Label(status2Container, textvariable=controller.vehicle2Alt, font = LARGE_FONT)
+		vehicle2AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle2LongLabel = tk.Label(status2Container, textvariable=controller.vehicle2Long, font = LARGE_FONT)
+		vehicle2LongLabel.grid(row=5, column=1, sticky=tk.W)
+		vehicle2LatLabel = tk.Label(status2Container, textvariable=controller.vehicle2Lat, font = LARGE_FONT)
+		vehicle2LatLabel.grid(row=6, column=1, sticky=tk.W)
+		vehicle2ModeLabel = tk.Label(status2Container, textvariable=controller.vehicleFlightMode[1], font = LARGE_FONT)
+		vehicle2ModeLabel.grid(row=7, column=1, sticky=tk.W)
 
 		###############################################################################
 		#create a lable for the first vehicle
@@ -277,14 +455,20 @@ class StartPage(tk.Frame):
 		status3Container = tk.Frame(self, width=150, height=500)
 		status3Container.grid(row=6, column = 4, padx=(80, 0))
 
-		vehicle3BatteryLabel = tk.Label(status3Container, text="Battery Voltage: 12.4V", font = LARGE_FONT)
-		vehicle3BatteryLabel.grid(row=1, column=1, sticky=tk.W)
-		vehicle3AltitudeLabel = tk.Label(status3Container, text="Altitude: 12m", font = LARGE_FONT)
-		vehicle3AltitudeLabel.grid(row=2, column=1, sticky=tk.W)
-		vehicle3LongLabel = tk.Label(status3Container, text="Longitude: -118.123432", font = LARGE_FONT)
-		vehicle3LongLabel.grid(row=3, column=1, sticky=tk.W)
-		vehicle3LatLabel = tk.Label(status3Container, text="Latitude: 35.234295", font = LARGE_FONT)
-		vehicle3LatLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle3BatteryVoltageLabel = tk.Label(status3Container, textvariable=controller.vehicle3Voltage, font = LARGE_FONT)
+		vehicle3BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
+		vehicle3BatteryCurrentLabel = tk.Label(status3Container, textvariable=controller.vehicle3Current, font = LARGE_FONT)
+		vehicle3BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
+		vehicle3BatteryPercentLabel = tk.Label(status3Container, textvariable=controller.vehicle3Percent, font = LARGE_FONT)
+		vehicle3BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
+		vehicle3AltitudeLabel = tk.Label(status3Container, textvariable=controller.vehicle3Alt, font = LARGE_FONT)
+		vehicle3AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle3LongLabel = tk.Label(status3Container, textvariable=controller.vehicle3Long, font = LARGE_FONT)
+		vehicle3LongLabel.grid(row=5, column=1, sticky=tk.W)
+		vehicle3LatLabel = tk.Label(status3Container, textvariable=controller.vehicle3Lat, font = LARGE_FONT)
+		vehicle3LatLabel.grid(row=6, column=1, sticky=tk.W)
+		vehicle3ModeLabel = tk.Label(status3Container, textvariable=controller.vehicleFlightMode[2], font = LARGE_FONT)
+		vehicle3ModeLabel.grid(row=7, column=1, sticky=tk.W)
 
 	def openPort(self, event):
 		'''This gets executed when the serial drop
@@ -305,6 +489,7 @@ class StartPage(tk.Frame):
 				print("opened port"+portName)
 			except:
 				print("cannot open port")
+
 
 	def serial_ports(self):
 	    """ Lists serial port names
@@ -334,13 +519,17 @@ class StartPage(tk.Frame):
 	            pass
 	    return result
 
+
+
 class vehicleCommands():
 	
 
-	def __init__(self, vehicleNumber, serialObject):
-		self.currentFlightMode = 0
+	def __init__(self, vehicleNumber, serialObject, controller):
+		self.senderID = 0
+		self.currentFlightMode = [0, 0, 0]
 		self.serialObject = serialObject
 		self.vehicleNumber = vehicleNumber
+		self.controller = controller
 
 		self.takeoffID = 1
 		self.landID = 2
@@ -354,57 +543,66 @@ class vehicleCommands():
 		self.upDownID = 10
 		self.localityID = 11
 		self.powerID = 12
+		self.disarmID = 13
 
 	def launch(self):
 		launchPacket = struct.pack('B', self.vehicleNumber)
 		launchPacket += struct.pack('B', self.takeoffID)
-		self.sendPacket(launchPacket, 2)
+		launchPacket += struct.pack('B', self.senderID)
+		self.sendPacket(launchPacket, 3)
 		print("launching vehicle: ")
 
 	def land(self):
 		landPacket = struct.pack('B', self.vehicleNumber)
 		landPacket += struct.pack('B', self.landID)
-		self.sendPacket(landPacket, 2)
+		landPacket += struct.pack('B', self.senderID)
+		self.sendPacket(landPacket, 3)
 		print("landing vehicle: ")
 
 	def eLand(self):
 		eLandPacket = struct.pack('B', self.vehicleNumber)
 		eLandPacket += struct.pack('B', self.eLandID)
-		self.sendPacket(eLandPacket, 2)
+		eLandPacket += struct.pack('B', self.senderID)
+		self.sendPacket(eLandPacket, 3)
 		print("landing vehicle: ")
 
 	def flightMode(self):
-
 		if self.currentFlightMode == 0:
+			self.controller.vehicleFlightMode[self.vehicleNumber-1].set("Flight Mode: Vector")
 			self.currentFlightMode = 1
 		else:
 			self.currentFlightMode = 0
+			self.controller.vehicleFlightMode[self.vehicleNumber-1].set("Flight Mode: Global")
 
 		print("changing flight mode")
 
 	def manualMode(self):
 		manualModePacket = struct.pack('B', self.vehicleNumber)
 		manualModePacket += struct.pack('B', self.manualID)
-		self.sendPacket(manualModePacket, 2)
+		manualModePacket += struct.pack('B', self.senderID)
+		self.sendPacket(manualModePacket, 3)
 		print("switched to manual mode")
 
 	def hold(self):
 		holdPacket = struct.pack('B', self.vehicleNumber)
 		holdPacket += struct.pack('B', self.holdID)
-		self.sendPacket(holdPacket, 2)
+		holdPacket += struct.pack('B', self.senderID)
+		self.sendPacket(holdPacket, 3)
 
 	def forward(self):
 		if self.currentFlightMode == 0:
 			forwardPacket = struct.pack('B', self.vehicleNumber)
 			forwardPacket += struct.pack('B', self.NSMoveID)
+			forwardPacket += struct.pack('B', self.senderID)
 			forwardPacket += struct.pack('B', 1)
-			self.sendPacket(forwardPacket, 3)
+			self.sendPacket(forwardPacket, 4)
 			print("moving forward global")
 		else:
 			vectorFBPacket = struct.pack('B', self.vehicleNumber)
 			vectorFBPacket += struct.pack('B', self.vectorFBID)
+			vectorFBacket += struct.pack('B', self.senderID)
 			vectorFBPacket += struct.pack('B', 1)
-			self.sendPacket(vectorFBPacket, 3)
+			self.sendPacket(vectorFBPacket, 4)
 			print("moving forward vector")
 
 
@@ -412,55 +610,63 @@ class vehicleCommands():
 		if self.currentFlightMode == 0:
 			forwardPacket = struct.pack('B', self.vehicleNumber)
 			forwardPacket += struct.pack('B', self.NSMoveID)
+			forwardacket += struct.pack('B', self.senderID)
 			forwardPacket += struct.pack('B', 0)
-			self.sendPacket(launchPacket, 3)
+			self.sendPacket(launchPacket, 4)
 			print("moving backward global")
 		else:
 			vectorFBPacket = struct.pack('B', self.vehicleNumber)
 			vectorFBPacket += struct.pack('B', self.vectorFBID)
+			vectorFBPacket += struct.pack('B', self.senderID)
 			vectorFBPacket += struct.pack('B', 0)
-			self.sendPacket(vectorFBPacket, 3)
+			self.sendPacket(vectorFBPacket, 4)
 			print("moving backward vector")
 
 	def left(self):
 		if self.currentFlightMode == 0:
 			leftPacket = struct.pack('B', self.vehicleNumber)
 			leftPacket += struct.pack('B', self.EWMoveID)
+			leftPacket += struct.pack('B', self.senderID)
 			leftPacket += struct.pack('B', 0)
-			self.sendPacket(leftPacket, 3)
+			self.sendPacket(leftPacket, 4)
 			print("moving left Global")
 		else:
 			leftPacket = struct.pack('B', self.vehicleNumber)
 			leftPacket += struct.pack('B', self.vectorLRID)
+			leftPacket += struct.pack('B', self.senderID)
 			leftPacket += struct.pack('B', 0)
-			self.sendPacket(leftPacket, 3)
+			self.sendPacket(leftPacket, 4)
 			print("moving left vector")
 
 	def right(self):
 		if self.currentFlightMode == 0:
 			rightPacket = struct.pack('B', self.vehicleNumber)
 			rightPacket += struct.pack('B', self.EWMoveID)
+			rightPacket += struct.pack('B', self.senderID)
 			rightPacket += struct.pack('B', 1)
-			self.sendPacket(rightPacket, 3)
+			self.sendPacket(rightPacket, 4)
 			print("moving right Global")
 		else:
 			rightPacket = struct.pack('B', self.vehicleNumber)
 			rightPacket += struct.pack('B', self.vectorLRID)
+			rightPacket += struct.pack('B', self.senderID)
 			rightPacket += struct.pack('B', 1)
-			self.sendPacket(rightPacket, 3)
+			self.sendPacket(rightPacket, 4)
 			print("moving right vector")
 
 	def up(self):
 		upPacket = struct.pack('B', self.vehicleNumber)
 		upPacket += struct.pack('B', self.upDownID)
+		upPacket += struct.pack('B', self.senderID)
 		upPacket += struct.pack('B', 1)
-		self.sendPacket(upPacket, 3)
+		self.sendPacket(upPacket, 4)
 
 	def down(self):
 		downPacket = struct.pack('B', self.vehicleNumber)
 		downPacket += struct.pack('B', self.upDownID)
+		downPacket += struct.pack('B', self.senderID)
 		downPacket += struct.pack('B', 0)
-		self.sendPacket(downPacket, 3)
+		self.sendPacket(downPacket, 4)
 
 	def sendPacket(self, payload, size):
 		packet = ''
@@ -472,16 +678,20 @@ class vehicleCommands():
 		PayloadSizeB = 0
 		packet += struct.pack('BB', PayloadSizeA, PayloadSizeB)
 		packet += payload
-		EOP = 3
-		packet += struct.pack('B', EOP)
 		CRC = CRCCCITT().calculate(packet)
 		packet += struct.pack('H', CRC)
+		EOP = 3
+		packet += struct.pack('B', EOP)
 		try:
 			self.serialObject.write(packet)
+			print("Sending Packet: " + packet)
 		except:
 			print("could not send serial")
 		print("packet")
 		
 
 app = SwarmApp()
-app.mainloop()
+while 1:
+	app.readByte()
+	app.update()
+	app.processPackets()
