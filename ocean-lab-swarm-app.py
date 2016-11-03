@@ -8,7 +8,7 @@ import struct
 from PyCRC.CRCCCITT import CRCCCITT
 import queue
 
-LARGE_FONT = ("Verdana", 12)
+LARGE_FONT = ("Verdana", 10)
 
 class SwarmApp(tk.Tk):
 	
@@ -19,7 +19,7 @@ class SwarmApp(tk.Tk):
 		#create a container to fit all the pages into
 		container = tk.Frame(self)
 		#make the window size 1000px by 750px
-		self.geometry('1000x750')
+		self.geometry('1000x800')
 		#fix the window size so that it cannot be resized 
 		self.resizable(width=False, height=False)
 		#fill the container to the entire window size
@@ -198,7 +198,7 @@ class SwarmApp(tk.Tk):
 				currentFloat = current[0]/1000.0
 				print(voltageFloat)
 				if droneID == 1:
-					self.vehicle1Voltage.set("Voltage: %fV" %voltageFloat)
+					self.vehicle1Voltage.set("Voltage: %.2fV" %voltageFloat)
 					self.vehicle1Current.set("Current: %.2fA" %currentFloat)
 					self.vehicle1Percent.set("Battery Percent: %i" %percentage[0])
 
@@ -267,6 +267,9 @@ class StartPage(tk.Frame):
 		holdButton1 = tk.Button(commandButtonWidget1, text = "Loiter Mode", font = LARGE_FONT, command = self.v1Commands.hold, height = 1, width = 15)
 		holdButton1.grid(row=6, column=1)
 
+		disarmButton1 = tk.Button(commandButtonWidget1, text = "Disarm", font = LARGE_FONT, command = self.v1Commands.disarm, height = 1, width = 15)
+		disarmButton1.grid(row=7, column=1)
+
 		#create horizontal position arrow container
 		arrowWidget1 = tk.Frame(self, width=250, heigh=250)
 		arrowWidget1.grid(row=2, column = 2, padx = 25)
@@ -292,6 +295,7 @@ class StartPage(tk.Frame):
 
 		downButton1 = tk.Button(upDownWidget1, image = self.downArrow, font = LARGE_FONT, command = self.v1Commands.down, height = 76, width = 50)
 		downButton1.grid(row=2, column=1)
+
 
 		#create data status update section
 		status1Container = tk.Frame(self, width=150, height=500)
@@ -350,6 +354,9 @@ class StartPage(tk.Frame):
 
 		holdButton2 = tk.Button(commandButtonWidget2, text = "Loiter Mode", font = LARGE_FONT, command = self.v2Commands.hold, height = 1, width = 15)
 		holdButton2.grid(row=6, column=1)
+
+		disarmButton2 = tk.Button(commandButtonWidget2, text = "Disarm", font = LARGE_FONT, command = self.v2Commands.disarm, height = 1, width = 15)
+		disarmButton2.grid(row=7, column=1)
 
 		#create horizontal position arrow container
 		arrowWidget2 = tk.Frame(self, width=250, heigh=250)
@@ -421,6 +428,9 @@ class StartPage(tk.Frame):
 
 		holdButton3 = tk.Button(commandButtonWidget3, text = "Loiter Mode", font = LARGE_FONT, command = self.v3Commands.hold, height = 1, width = 15)
 		holdButton3.grid(row=6, column=1)
+
+		disarmButton3 = tk.Button(commandButtonWidget3, text = "Disarm", font = LARGE_FONT, command = self.v3Commands.disarm, height = 1, width = 15)
+		disarmButton3.grid(row=7, column=1)
 
 		#create horizontal position arrow container
 		arrowWidget3 = tk.Frame(self, width=250, heigh=250)
@@ -533,14 +543,15 @@ class vehicleCommands():
 		self.eLandID = 3
 		self.holdID = 4
 		self.manualID = 5
-		self.NSMoveID = 6
-		self.EWMoveID = 7
-		self.vectorFBID = 8
-		self.vectorLRID = 9
+		self.NSMoveID = 7
+		self.EWMoveID = 6
+		self.vectorFBID = 9
+		self.vectorLRID = 8
 		self.upDownID = 10
 		self.localityID = 11
 		self.powerID = 12
 		self.disarmID = 13
+
 
 	def launch(self):
 		launchPacket = struct.pack('B', self.vehicleNumber)
@@ -631,7 +642,7 @@ class vehicleCommands():
 			leftPacket = struct.pack('B', self.vehicleNumber)
 			leftPacket += struct.pack('B', self.vectorLRID)
 			leftPacket += struct.pack('B', self.senderID)
-			leftPacket += struct.pack('B', 0)
+			leftPacket += struct.pack('B', 1)
 			self.sendPacket(leftPacket, 4)
 			print("moving left vector")
 
@@ -640,7 +651,7 @@ class vehicleCommands():
 			rightPacket = struct.pack('B', self.vehicleNumber)
 			rightPacket += struct.pack('B', self.EWMoveID)
 			rightPacket += struct.pack('B', self.senderID)
-			rightPacket += struct.pack('B', 1)
+			rightPacket += struct.pack('B', 0)
 			self.sendPacket(rightPacket, 4)
 			print("moving right Global")
 		else:
@@ -666,6 +677,13 @@ class vehicleCommands():
 		downPacket += struct.pack('B', 0)
 		print("moving down")
 		self.sendPacket(downPacket, 4)
+
+	def disarm(self):
+		disarmPacket = struct.pack('B', self.vehicleNumber)
+		disarmPacket += struct.pack('B', self.disarmID)
+		disarmPacket += struct.pack('B', self.senderID)
+		print("disarming")
+		self.sendPacket(disarmPacket, 3)
 
 	def sendPacket(self, payload, size):
 		packet = ''
