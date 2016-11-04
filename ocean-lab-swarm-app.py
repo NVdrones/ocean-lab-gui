@@ -18,7 +18,7 @@ class SwarmApp(tk.Tk):
 
 		#create a container to fit all the pages into
 		container = tk.Frame(self)
-		#make the window size 1000px by 750px
+		#make the window size 1000px by 800px
 		self.geometry('1000x800')
 		#fix the window size so that it cannot be resized 
 		self.resizable(width=False, height=False)
@@ -224,15 +224,6 @@ class StartPage(tk.Frame):
 	def __init__(self, parent, controller):
 		self.controller = controller
 
-
-		#set up all images used 
-		self.forwardArrow = tk.PhotoImage(file="Media/forward arrow.gif")
-		self.backArrow = tk.PhotoImage(file="Media/back arrow.gif")
-		self.leftArrow = tk.PhotoImage(file="Media/left arrow.gif")
-		self.rightArrow = tk.PhotoImage(file="Media/right arrow.gif")
-		self.upArrow = tk.PhotoImage(file="Media/up arrow.gif")
-		self.downArrow = tk.PhotoImage(file="Media/down arrow.gif")
-
 		#create serial object to handle sending commands to swarm box
 		self.v1Commands = vehicleCommands(1, controller.uart, controller)
 		self.v2Commands = vehicleCommands(2, controller.uart, controller)
@@ -240,20 +231,45 @@ class StartPage(tk.Frame):
 
 		#create a Frame for the current Page
 		tk.Frame.__init__(self, parent)
-		
-		####################################################################################
-		#create a lable for the first vehicle
-		vehicle1Label = tk.Label(self, text="Vehicle 1", font = LARGE_FONT)
-		vehicle1Label.grid(row=1, column=3, pady=10)
 
-		#create a container for the command buttons
-		commandButtonWidget1 = tk.Frame(self, width=125, height=400)
-		commandButtonWidget1.grid(row=2, column = 1)
+
+		
+		##########create header container###################################
+		headerWidget = tk.Frame(self, width=1000, height=400)
+		headerWidget.pack(fill=tk.X)
+		#create a label for the first vehicle
+		vehicle1Label = tk.Label(headerWidget, text="Vehicle 1", font = LARGE_FONT)
+		vehicle1Label.grid(row=1, column=0, pady= (30, 0), padx = (55, 52))
+
+		#create a lable for the first vehicle
+		vehicle2Label = tk.Label(headerWidget, text="Vehicle 2", font = LARGE_FONT)
+		vehicle2Label.grid(row=1, column=1, pady=(30,0), padx = 52)
+
+		#create a lable for the second vehicle
+		vehicle3Label = tk.Label(headerWidget, text="Vehicle 3", font = LARGE_FONT)
+		vehicle3Label.grid(row=1, column=2, pady=(30,0), padx = 52)
+
+		ports = self.serial_ports()
+		ports = ['ports closed'] + ports
+
+		self.serialPort = ttk.Combobox(headerWidget, values=ports, state='readonly', )
+		self.serialPort.grid(row=1, column=4, padx = 200, pady = (30, 0))
+		self.serialPort.bind("<<ComboboxSelected>>", self.openPort)
+		self.serialPort.current(0)
+
+
+
+		############create a container for the command buttons#######################
+		commandWidget = tk.Frame(self, width=1000, height=400)
+		commandWidget.pack(fill = tk.X)
+
+		commandButtonWidget1 = tk.Frame(commandWidget, width=125, height=400)
+		commandButtonWidget1.grid(row=1, column = 1, padx = 20, pady = 0)
 		launchButton1 = tk.Button(commandButtonWidget1, text = "Launch Vehicle", font = LARGE_FONT, command = self.v1Commands.launch, height = 1, width = 15)
 		launchButton1.grid(row=1, column=1)
 
-		modeButton1 = tk.Button(commandButtonWidget1, text = "FlightMode", font = LARGE_FONT, command = self.v1Commands.flightMode, height = 1, width = 15)
-		modeButton1.grid(row=2, column=1)
+		armButton1 = tk.Button(commandButtonWidget1, text = "Arm", font = LARGE_FONT, command = self.v1Commands.arm, height = 1, width = 15)
+		armButton1.grid(row=2, column=1)
 
 		landButton1 = tk.Button(commandButtonWidget1, text = "Land Vehicle", font = LARGE_FONT, command = self.v1Commands.land, height = 1, width = 15)
 		landButton1.grid(row=3, column=1)
@@ -270,78 +286,14 @@ class StartPage(tk.Frame):
 		disarmButton1 = tk.Button(commandButtonWidget1, text = "Disarm", font = LARGE_FONT, command = self.v1Commands.disarm, height = 1, width = 15)
 		disarmButton1.grid(row=7, column=1)
 
-		#create horizontal position arrow container
-		arrowWidget1 = tk.Frame(self, width=250, heigh=250)
-		arrowWidget1.grid(row=2, column = 2, padx = 25)
 
-		forwardButton1 = tk.Button(arrowWidget1, image = self.forwardArrow, font = LARGE_FONT, command = self.v1Commands.forward, height = 68, width = 45)
-		forwardButton1.grid(row=1, column=2)
-
-		backButton1 = tk.Button(arrowWidget1, image = self.backArrow, font = LARGE_FONT, command = self.v1Commands.back, height = 68, width = 45)
-		backButton1.grid(row=3, column=2)
-
-		leftButton1 = tk.Button(arrowWidget1, image = self.leftArrow, font = LARGE_FONT, command = self.v1Commands.left, height = 45, width = 68)
-		leftButton1.grid(row=2, column=1)
-
-		rightButton1 = tk.Button(arrowWidget1, image = self.rightArrow, font = LARGE_FONT, command = self.v1Commands.right, height = 45, width = 68)
-		rightButton1.grid(row=2, column=3)
-
-		#create up down arrow container
-		upDownWidget1 = tk.Frame(self, width=150, height=500)
-		upDownWidget1.grid(row=2, column = 3)
-
-		upButton1 = tk.Button(upDownWidget1, image = self.upArrow, font = LARGE_FONT, command = self.v1Commands.up, height = 76, width = 50)
-		upButton1.grid(row=1, column=1)
-
-		downButton1 = tk.Button(upDownWidget1, image = self.downArrow, font = LARGE_FONT, command = self.v1Commands.down, height = 76, width = 50)
-		downButton1.grid(row=2, column=1)
-
-
-		#create data status update section
-		status1Container = tk.Frame(self, width=150, height=500)
-		status1Container.grid(row=2, column = 4, padx=(80, 0))
-
-		vehicle1BatteryVoltageLabel = tk.Label(status1Container, textvariable=controller.vehicle1Voltage, font = LARGE_FONT)
-		vehicle1BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
-		vehicle1BatteryCurrentLabel = tk.Label(status1Container, textvariable=controller.vehicle1Current, font = LARGE_FONT)
-		vehicle1BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
-		vehicle1BatteryPercentLabel = tk.Label(status1Container, textvariable=controller.vehicle1Percent, font = LARGE_FONT)
-		vehicle1BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
-		vehicle1AltitudeLabel = tk.Label(status1Container, textvariable=controller.vehicle1Alt, font = LARGE_FONT)
-		vehicle1AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
-		vehicle1LongLabel = tk.Label(status1Container, textvariable=controller.vehicle1Long, font = LARGE_FONT)
-		vehicle1LongLabel.grid(row=5, column=1, sticky=tk.W)
-		vehicle1LatLabel = tk.Label(status1Container, textvariable=controller.vehicle1Lat, font = LARGE_FONT)
-		vehicle1LatLabel.grid(row=6, column=1, sticky=tk.W)
-		vehicle1ModeLabel = tk.Label(status1Container, textvariable=controller.vehicleFlightMode[0], font = LARGE_FONT)
-		vehicle1ModeLabel.grid(row=7, column=1, sticky=tk.W)
-
-		#create a container for the Serial Information
-		serialContainer = tk.Frame(self, width=150, height=500)
-		serialContainer.grid(row=2, column = 5, padx=(80, 0))
-
-		ports = self.serial_ports()
-		ports = ['ports closed'] + ports
-
-		self.serialPort = ttk.Combobox(serialContainer, values=ports, state='readonly', )
-		self.serialPort.grid(row=1, column=1)
-		self.serialPort.bind("<<ComboboxSelected>>", self.openPort)
-		self.serialPort.current(0)
-
-
-		###############################################################################
-		#create a lable for the first vehicle
-		vehicle2Label = tk.Label(self, text="Vehicle 2", font = LARGE_FONT)
-		vehicle2Label.grid(row=3, column=3, pady=10)
-
-		#create a container for the command buttons
-		commandButtonWidget2 = tk.Frame(self, width=125, height=400)
-		commandButtonWidget2.grid(row=4, column = 1)
+		commandButtonWidget2 = tk.Frame(commandWidget, width=125, height=400)
+		commandButtonWidget2.grid(row=1, column = 2, padx = 20, pady = 0)
 		launchButton2 = tk.Button(commandButtonWidget2, text = "Launch Vehicle", font = LARGE_FONT, command = self.v2Commands.launch, height = 1, width = 15)
 		launchButton2.grid(row=1, column=1)
 
-		modeButton2 = tk.Button(commandButtonWidget2, text = "Flight Mode", font = LARGE_FONT, command = self.v2Commands.flightMode, height = 1, width = 15)
-		modeButton2.grid(row=2, column=1)
+		armButton2 = tk.Button(commandButtonWidget2, text = "Arm", font = LARGE_FONT, command = self.v2Commands.arm, height = 1, width = 15)
+		armButton2.grid(row=2, column=1)
 
 		landButton2 = tk.Button(commandButtonWidget2, text = "Land Vehicle", font = LARGE_FONT, command = self.v2Commands.land, height = 1, width = 15)
 		landButton2.grid(row=3, column=1)
@@ -358,64 +310,13 @@ class StartPage(tk.Frame):
 		disarmButton2 = tk.Button(commandButtonWidget2, text = "Disarm", font = LARGE_FONT, command = self.v2Commands.disarm, height = 1, width = 15)
 		disarmButton2.grid(row=7, column=1)
 
-		#create horizontal position arrow container
-		arrowWidget2 = tk.Frame(self, width=250, heigh=250)
-		arrowWidget2.grid(row=4, column = 2, padx = 25)
-
-		forwardButton2 = tk.Button(arrowWidget2, image = self.forwardArrow, font = LARGE_FONT, command = self.v2Commands.forward, height = 68, width = 45)
-		forwardButton2.grid(row=1, column=2)
-
-		backButton2 = tk.Button(arrowWidget2, image = self.backArrow, font = LARGE_FONT, command = self.v2Commands.back, height = 68, width = 45)
-		backButton2.grid(row=3, column=2)
-
-		leftButton2 = tk.Button(arrowWidget2, image = self.leftArrow, font = LARGE_FONT, command = self.v2Commands.left, height = 45, width = 68)
-		leftButton2.grid(row=2, column=1)
-
-		rightButton2 = tk.Button(arrowWidget2, image = self.rightArrow, font = LARGE_FONT, command = self.v2Commands.right, height = 45, width = 68)
-		rightButton2.grid(row=2, column=3)
-
-		#create up down arrow container
-		upDownWidget2 = tk.Frame(self, width=150, height=500)
-		upDownWidget2.grid(row=4, column = 3)
-
-		upButton2 = tk.Button(upDownWidget2, image = self.upArrow, font = LARGE_FONT, command = self.v2Commands.up, height = 76, width = 50)
-		upButton2.grid(row=1, column=1)
-
-		downButton2 = tk.Button(upDownWidget2, image = self.downArrow, font = LARGE_FONT, command = self.v2Commands.down, height = 76, width = 50)
-		downButton2.grid(row=2, column=1)
-
-		#create data status update section
-		status2Container = tk.Frame(self, width=150, height=500)
-		status2Container.grid(row=4, column = 4, padx=(80, 0))
-
-		vehicle2BatteryVoltageLabel = tk.Label(status2Container, textvariable=controller.vehicle2Voltage, font = LARGE_FONT)
-		vehicle2BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
-		vehicle2BatteryCurrentLabel = tk.Label(status2Container, textvariable=controller.vehicle2Current, font = LARGE_FONT)
-		vehicle2BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
-		vehicle2BatteryPercentLabel = tk.Label(status2Container, textvariable=controller.vehicle2Percent, font = LARGE_FONT)
-		vehicle2BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
-		vehicle2AltitudeLabel = tk.Label(status2Container, textvariable=controller.vehicle2Alt, font = LARGE_FONT)
-		vehicle2AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
-		vehicle2LongLabel = tk.Label(status2Container, textvariable=controller.vehicle2Long, font = LARGE_FONT)
-		vehicle2LongLabel.grid(row=5, column=1, sticky=tk.W)
-		vehicle2LatLabel = tk.Label(status2Container, textvariable=controller.vehicle2Lat, font = LARGE_FONT)
-		vehicle2LatLabel.grid(row=6, column=1, sticky=tk.W)
-		vehicle2ModeLabel = tk.Label(status2Container, textvariable=controller.vehicleFlightMode[1], font = LARGE_FONT)
-		vehicle2ModeLabel.grid(row=7, column=1, sticky=tk.W)
-
-		###############################################################################
-		#create a lable for the first vehicle
-		vehicle3Label = tk.Label(self, text="Vehicle 3", font = LARGE_FONT)
-		vehicle3Label.grid(row=5, column=3, pady=10)
-
-		#create a container for the command buttons
-		commandButtonWidget3 = tk.Frame(self, width=125, height=400)
-		commandButtonWidget3.grid(row=6, column = 1)
+		commandButtonWidget3 = tk.Frame(commandWidget, width=125, height=400)
+		commandButtonWidget3.grid(row=1, column = 3, padx = 20, pady = 0)
 		launchButton3 = tk.Button(commandButtonWidget3, text = "Launch Vehicle", font = LARGE_FONT, command = self.v3Commands.launch, height = 1, width = 15)
 		launchButton3.grid(row=1, column=1)
 
-		modeButton3 = tk.Button(commandButtonWidget3, text = "Flight Mode", font = LARGE_FONT, command = self.v3Commands.flightMode, height = 1, width = 15)
-		modeButton3.grid(row=2, column=1)
+		armButton3 = tk.Button(commandButtonWidget3, text = "Arm", font = LARGE_FONT, command = self.v3Commands.arm, height = 1, width = 15)
+		armButton3.grid(row=2, column=1)
 
 		landButton3 = tk.Button(commandButtonWidget3, text = "Land Vehicle", font = LARGE_FONT, command = self.v3Commands.land, height = 1, width = 15)
 		landButton3.grid(row=3, column=1)
@@ -432,35 +333,60 @@ class StartPage(tk.Frame):
 		disarmButton3 = tk.Button(commandButtonWidget3, text = "Disarm", font = LARGE_FONT, command = self.v3Commands.disarm, height = 1, width = 15)
 		disarmButton3.grid(row=7, column=1)
 
-		#create horizontal position arrow container
-		arrowWidget3 = tk.Frame(self, width=250, heigh=250)
-		arrowWidget3.grid(row=6, column = 2, padx = 25)
-
-		forwardButton3 = tk.Button(arrowWidget3, image = self.forwardArrow, font = LARGE_FONT, command = self.v3Commands.forward, height = 68, width = 45)
-		forwardButton3.grid(row=1, column=2)
-
-		backButton3 = tk.Button(arrowWidget3, image = self.backArrow, font = LARGE_FONT, command = self.v3Commands.back, height = 68, width = 45)
-		backButton3.grid(row=3, column=2)
-
-		leftButton3 = tk.Button(arrowWidget3, image = self.leftArrow, font = LARGE_FONT, command = self.v3Commands.left, height = 45, width = 68)
-		leftButton3.grid(row=2, column=1)
-
-		rightButton3 = tk.Button(arrowWidget3, image = self.rightArrow, font = LARGE_FONT, command = self.v3Commands.right, height = 45, width = 68)
-		rightButton3.grid(row=2, column=3)
-
-		#create up down arrow container
-		upDownWidget3 = tk.Frame(self, width=150, height=500)
-		upDownWidget3.grid(row=6, column = 3)
-
-		upButton3 = tk.Button(upDownWidget3, image = self.upArrow, font = LARGE_FONT, command = self.v3Commands.up, height = 76, width = 50)
-		upButton3.grid(row=1, column=1)
-
-		downButton3 = tk.Button(upDownWidget3, image = self.downArrow, font = LARGE_FONT, command = self.v3Commands.down, height = 76, width = 50)
-		downButton3.grid(row=2, column=1)
+		
 
 		#create data status update section
-		status3Container = tk.Frame(self, width=150, height=500)
-		status3Container.grid(row=6, column = 4, padx=(80, 0))
+		statusContainer = tk.Frame(self, width=1000, height=500)
+		statusContainer.pack(fill = tk.X)
+
+
+		status1Container = tk.Frame(statusContainer, width=150, height=500)
+		status1Container.grid(row=3, column = 1, padx=(30, 180))
+
+		vehicle1Label = tk.Label(status1Container, text="Vehicle 1", font = LARGE_FONT)
+		vehicle1Label.grid(row=0, column=1, sticky=tk.W, pady = (20, 0))
+
+		vehicle1BatteryVoltageLabel = tk.Label(status1Container, textvariable=controller.vehicle1Voltage, font = LARGE_FONT)
+		vehicle1BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
+		vehicle1BatteryCurrentLabel = tk.Label(status1Container, textvariable=controller.vehicle1Current, font = LARGE_FONT)
+		vehicle1BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
+		vehicle1BatteryPercentLabel = tk.Label(status1Container, textvariable=controller.vehicle1Percent, font = LARGE_FONT)
+		vehicle1BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
+		vehicle1AltitudeLabel = tk.Label(status1Container, textvariable=controller.vehicle1Alt, font = LARGE_FONT)
+		vehicle1AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle1LongLabel = tk.Label(status1Container, textvariable=controller.vehicle1Long, font = LARGE_FONT)
+		vehicle1LongLabel.grid(row=5, column=1, sticky=tk.W)
+		vehicle1LatLabel = tk.Label(status1Container, textvariable=controller.vehicle1Lat, font = LARGE_FONT)
+		vehicle1LatLabel.grid(row=6, column=1, sticky=tk.W)
+
+
+		#create data status update section
+		status2Container = tk.Frame(statusContainer, width=150, height=500)
+		status2Container.grid(row=3, column = 2, padx=(0, 180))
+
+		vehicle2Label = tk.Label(status2Container, text="Vehicle 2", font = LARGE_FONT)
+		vehicle2Label.grid(row=0, column=1, sticky = tk.W, pady = (20, 0))
+
+		vehicle2BatteryVoltageLabel = tk.Label(status2Container, textvariable=controller.vehicle2Voltage, font = LARGE_FONT)
+		vehicle2BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
+		vehicle2BatteryCurrentLabel = tk.Label(status2Container, textvariable=controller.vehicle2Current, font = LARGE_FONT)
+		vehicle2BatteryCurrentLabel.grid(row=2, column=1, sticky=tk.W)
+		vehicle2BatteryPercentLabel = tk.Label(status2Container, textvariable=controller.vehicle2Percent, font = LARGE_FONT)
+		vehicle2BatteryPercentLabel.grid(row=3, column=1, sticky=tk.W)
+		vehicle2AltitudeLabel = tk.Label(status2Container, textvariable=controller.vehicle2Alt, font = LARGE_FONT)
+		vehicle2AltitudeLabel.grid(row=4, column=1, sticky=tk.W)
+		vehicle2LongLabel = tk.Label(status2Container, textvariable=controller.vehicle2Long, font = LARGE_FONT)
+		vehicle2LongLabel.grid(row=5, column=1, sticky=tk.W)
+		vehicle2LatLabel = tk.Label(status2Container, textvariable=controller.vehicle2Lat, font = LARGE_FONT)
+		vehicle2LatLabel.grid(row=6, column=1, sticky=tk.W)
+
+		#create data status update section
+		status3Container = tk.Frame(statusContainer, width=150, height=500)
+		status3Container.grid(row=3, column = 3, padx=(0, 200))
+
+		vehicle3Label = tk.Label(status3Container, text="Vehicle 3", font = LARGE_FONT)
+		vehicle3Label.grid(row=0, column=1, sticky = tk.W, pady = (20, 0))
+
 
 		vehicle3BatteryVoltageLabel = tk.Label(status3Container, textvariable=controller.vehicle3Voltage, font = LARGE_FONT)
 		vehicle3BatteryVoltageLabel.grid(row=1, column=1, sticky=tk.W)
@@ -474,8 +400,130 @@ class StartPage(tk.Frame):
 		vehicle3LongLabel.grid(row=5, column=1, sticky=tk.W)
 		vehicle3LatLabel = tk.Label(status3Container, textvariable=controller.vehicle3Lat, font = LARGE_FONT)
 		vehicle3LatLabel.grid(row=6, column=1, sticky=tk.W)
-		vehicle3ModeLabel = tk.Label(status3Container, textvariable=controller.vehicleFlightMode[2], font = LARGE_FONT)
-		vehicle3ModeLabel.grid(row=7, column=1, sticky=tk.W)
+
+
+
+		#####Position Controls#######################
+		positionContainer = tk.Frame(self, width=1000, height=200)
+		positionContainer.pack(fill = tk.X)
+
+		position1Container = tk.Frame(positionContainer)
+		position1Container.grid(row=1, column = 1, padx = (15, 85), sticky = tk.W)
+
+		#altitude Entry
+		alt1Label = tk.Label(position1Container, text="Vehicle 1 Altitude (m)", font = LARGE_FONT)
+		alt1Label.grid(row=0, column=1, padx = (15, 10), pady = (50, 0), sticky = tk.W)
+		self.altitude1Entry = tk.Entry(position1Container)
+		self.altitude1Entry.grid(row=1, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		altitude1Button = tk.Button(position1Container, text = "Go to Altitude", font = LARGE_FONT, command = lambda: self.altitude(1), height = 1, width = 15)
+		altitude1Button.grid(row=2, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+
+		#vector Entry
+		heading1Label = tk.Label(position1Container, text="Vehicle 1 Heading (Deg)", font = LARGE_FONT)
+		heading1Label.grid(row=3, column=1, padx = (15, 10), pady = (40, 0), sticky = tk.W)
+		self.heading1Entry = tk.Entry(position1Container)
+		self.heading1Entry.grid(row=4, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		mag1Label = tk.Label(position1Container, text="Vehicle 1 Magnitude (m/s)", font = LARGE_FONT)
+		mag1Label.grid(row=5, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
+		self.mag1Entry = tk.Entry(position1Container)
+		self.mag1Entry.grid(row=6, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		timeout1Label = tk.Label(position1Container, text="Vehicle 1 Timeout (s)", font = LARGE_FONT)
+		timeout1Label.grid(row=7, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
+		self.timeout1Entry = tk.Entry(position1Container)
+		self.timeout1Entry.grid(row=8, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		vector1Button = tk.Button(position1Container, text = "Move", font = LARGE_FONT, command = lambda: self.vector(1), height = 1, width = 15)
+		vector1Button.grid(row=9, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+
+		position2Container = tk.Frame(positionContainer)
+		position2Container.grid(row=1, column = 2, padx = (15, 85), sticky = tk.W)
+
+		#altitude Entry
+		alt2Label = tk.Label(position2Container, text="Vehicle 2 Altitude (m)", font = LARGE_FONT)
+		alt2Label.grid(row=0, column=1, padx = (15, 10), pady = (50, 0), sticky = tk.W)
+		self.altitude2Entry = tk.Entry(position2Container)
+		self.altitude2Entry.grid(row=1, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		altitude2Button = tk.Button(position2Container, text = "Go to Altitude", font = LARGE_FONT, command = lambda: self.altitude(2), height = 1, width = 15)
+		altitude2Button.grid(row=2, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+
+		#vector Entry
+		heading2Label = tk.Label(position2Container, text="Vehicle 2 Heading (Deg)", font = LARGE_FONT)
+		heading2Label.grid(row=3, column=1, padx = (15, 10), pady = (40, 0), sticky = tk.W)
+		self.heading2Entry = tk.Entry(position2Container)
+		self.heading2Entry.grid(row=4, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		mag2Label = tk.Label(position2Container, text="Vehicle 2 Magnitude (m/s)", font = LARGE_FONT)
+		mag2Label.grid(row=5, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
+		self.mag2Entry = tk.Entry(position2Container)
+		self.mag2Entry.grid(row=6, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		timeout2Label = tk.Label(position2Container, text="Vehicle 2 Timeout (s)", font = LARGE_FONT)
+		timeout2Label.grid(row=7, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
+		self.timeout2Entry = tk.Entry(position2Container)
+		self.timeout2Entry.grid(row=8, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		vector2Button = tk.Button(position2Container, text = "Move", font = LARGE_FONT, command = lambda: self.vector(2), height = 1, width = 15)
+		vector2Button.grid(row=9, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+
+		position3Container = tk.Frame(positionContainer)
+		position3Container.grid(row=1, column = 3, padx = (15, 85), sticky = tk.W)
+
+		#altitude Entry
+		alt3Label = tk.Label(position3Container, text="Vehicle 3 Altitude (m)", font = LARGE_FONT)
+		alt3Label.grid(row=0, column=1, padx = (15, 10), pady = (50, 0), sticky = tk.W)
+		self.altitude3Entry = tk.Entry(position3Container)
+		self.altitude3Entry.grid(row=1, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		altitude3Button = tk.Button(position3Container, text = "Go to Altitude", font = LARGE_FONT, command = lambda:self.altitude(3), height = 1, width = 15)
+		altitude3Button.grid(row=2, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+
+		#vector Entry
+		heading3Label = tk.Label(position3Container, text="Vehicle 3 Heading (Deg)", font = LARGE_FONT)
+		heading3Label.grid(row=3, column=1, padx = (15, 10), pady = (40, 0), sticky = tk.W)
+		self.heading3Entry = tk.Entry(position3Container)
+		self.heading3Entry.grid(row=4, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		mag3Label = tk.Label(position3Container, text="Vehicle 3 Magnitude (m/s)", font = LARGE_FONT)
+		mag3Label.grid(row=5, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
+		self.mag3Entry = tk.Entry(position3Container)
+		self.mag3Entry.grid(row=6, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		timeout3Label = tk.Label(position3Container, text="Vehicle 3 Timeout (s)", font = LARGE_FONT)
+		timeout3Label.grid(row=7, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
+		self.timeout3Entry = tk.Entry(position3Container)
+		self.timeout3Entry.grid(row=8, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		vector3Button = tk.Button(position3Container, text = "Move", font = LARGE_FONT, command = lambda: self.vector(3), height = 1, width = 15)
+		vector3Button.grid(row=9, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
+		#vector 3ntry
+
+	def altitude(self, vehicleNumber):
+		if vehicleNumber == 1:
+			altitude = int(self.altitude1Entry.get())
+			self.v1Commands.altitude(altitude)
+		elif vehicleNumber == 2:
+			altitude = int(self.altitude2Entry.get())
+			self.v2Commands.altitude(altitude)
+		elif vehicleNumber == 3:
+			altitude = int(self.altitude2Entry.get())
+			self.v3Commands.altitude(altitude)
+
+
+	def vector(self, vehicleNumber):
+		if vehicleNumber == 1:
+			heading = int(self.heading1Entry.get())
+			magnitude = int(self.mag1Entry.get())
+			timeout = int(self.timeout1Entry.get())
+			self.v1Commands.vector(heading, magnitude, timeout)
+		elif vehicleNumber == 2:
+			heading = int(self.heading2Entry.get())
+			magnitude = int(self.mag2Entry.get())
+			timeout = int(self.timeout2Entry.get())
+			self.v2Commands.vector(heading, magnitude, timeout)
+		elif vehicleNumber == 3:
+			heading = int(self.heading3Entry.get())
+			magnitude = int(self.mag3Entry.get())
+			timeout = sint(self.timeout3Entry.get())
+			self.v3Commands.vector(heading, magnitude, timeout)
+
+
+
+
+
+
+		
 
 	def openPort(self, event):
 		'''This gets executed when the serial drop
@@ -545,9 +593,8 @@ class vehicleCommands():
 		self.manualID = 5
 		self.NSMoveID = 7
 		self.EWMoveID = 6
-		self.vectorFBID = 9
-		self.vectorLRID = 8
-		self.upDownID = 10
+		self.vectorID = 9
+		self.altID = 10
 		self.localityID = 11
 		self.powerID = 12
 		self.disarmID = 13
@@ -574,15 +621,12 @@ class vehicleCommands():
 		self.sendPacket(eLandPacket, 3)
 		print("landing vehicle: ")
 
-	def flightMode(self):
-		if self.currentFlightMode == 0:
-			self.controller.vehicleFlightMode[self.vehicleNumber-1].set("Flight Mode: Vector")
-			self.currentFlightMode = 1
-		else:
-			self.currentFlightMode = 0
-			self.controller.vehicleFlightMode[self.vehicleNumber-1].set("Flight Mode: Global")
-
-		print("changing flight mode")
+	def arm(self):
+		armPacket = struct.pack('B', self.vehicleNumber)
+		armPacket += struct.pack('B', self.armID)
+		armPacket += struct.pack('B', self.senderID)
+		self.sendPacket(armPacket, 3)
+		print("landing vehicle: ")
 
 	def manualMode(self):
 		manualModePacket = struct.pack('B', self.vehicleNumber)
@@ -597,86 +641,23 @@ class vehicleCommands():
 		holdPacket += struct.pack('B', self.senderID)
 		self.sendPacket(holdPacket, 3)
 
-	def forward(self):
-		if self.currentFlightMode == 0:
-			forwardPacket = struct.pack('B', self.vehicleNumber)
-			forwardPacket += struct.pack('B', self.NSMoveID)
-			forwardPacket += struct.pack('B', self.senderID)
-			forwardPacket += struct.pack('B', 1)
-			self.sendPacket(forwardPacket, 4)
-			print("moving forward global")
-		else:
-			vectorFBPacket = struct.pack('B', self.vehicleNumber)
-			vectorFBPacket += struct.pack('B', self.vectorFBID)
-			vectorFBPacket += struct.pack('B', self.senderID)
-			vectorFBPacket += struct.pack('B', 1)
-			self.sendPacket(vectorFBPacket, 4)
-			print("moving forward vector")
+	def vector(self, heading, magnitude, timeout):
+		vectorPacket = struct.pack('B', self.vehicleNumber)
+		vectorPacket += struct.pack('B', self.vectorID)
+		vectorPacket += struct.pack('B', self.senderID)
+		vectorPacket += struct.pack('H', magnitude)
+		vectorPacket += struct.pack('H', heading)
+		vectorPacket += struct.pack('H', timeout)
+		self.sendPacket(vectorPacket, 9)
+		print("sending vector packet")
 
-
-	def back(self):
-		if self.currentFlightMode == 0:
-			forwardPacket = struct.pack('B', self.vehicleNumber)
-			forwardPacket += struct.pack('B', self.NSMoveID)
-			forwardPacket += struct.pack('B', self.senderID)
-			forwardPacket += struct.pack('B', 0)
-			self.sendPacket(forwardPacket, 4)
-			print("moving backward global")
-		else:
-			vectorFBPacket = struct.pack('B', self.vehicleNumber)
-			vectorFBPacket += struct.pack('B', self.vectorFBID)
-			vectorFBPacket += struct.pack('B', self.senderID)
-			vectorFBPacket += struct.pack('B', 0)
-			self.sendPacket(vectorFBPacket, 4)
-			print("moving backward vector")
-
-	def left(self):
-		if self.currentFlightMode == 0:
-			leftPacket = struct.pack('B', self.vehicleNumber)
-			leftPacket += struct.pack('B', self.EWMoveID)
-			leftPacket += struct.pack('B', self.senderID)
-			leftPacket += struct.pack('B', 0)
-			self.sendPacket(leftPacket, 4)
-			print("moving left Global")
-		else:
-			leftPacket = struct.pack('B', self.vehicleNumber)
-			leftPacket += struct.pack('B', self.vectorLRID)
-			leftPacket += struct.pack('B', self.senderID)
-			leftPacket += struct.pack('B', 1)
-			self.sendPacket(leftPacket, 4)
-			print("moving left vector")
-
-	def right(self):
-		if self.currentFlightMode == 0:
-			rightPacket = struct.pack('B', self.vehicleNumber)
-			rightPacket += struct.pack('B', self.EWMoveID)
-			rightPacket += struct.pack('B', self.senderID)
-			rightPacket += struct.pack('B', 0)
-			self.sendPacket(rightPacket, 4)
-			print("moving right Global")
-		else:
-			rightPacket = struct.pack('B', self.vehicleNumber)
-			rightPacket += struct.pack('B', self.vectorLRID)
-			rightPacket += struct.pack('B', self.senderID)
-			rightPacket += struct.pack('B', 1)
-			self.sendPacket(rightPacket, 4)
-			print("moving right vector")
-
-	def up(self):
-		upPacket = struct.pack('B', self.vehicleNumber)
-		upPacket += struct.pack('B', self.upDownID)
-		upPacket += struct.pack('B', self.senderID)
-		upPacket += struct.pack('B', 1)
-		print("moving up")
-		self.sendPacket(upPacket, 4)
-
-	def down(self):
-		downPacket = struct.pack('B', self.vehicleNumber)
-		downPacket += struct.pack('B', self.upDownID)
-		downPacket += struct.pack('B', self.senderID)
-		downPacket += struct.pack('B', 0)
-		print("moving down")
-		self.sendPacket(downPacket, 4)
+	def altitude(self, altitude):
+		altPacket = struct.pack('B', self.vehicleNumber)
+		altPacket += struct.pack('B', self.altID)
+		altPacket += struct.pack('B', self.senderID)
+		altPacket += struct.pack('H', altitude)
+		print("sending alt packet")
+		self.sendPacket(altPacket, 5)
 
 	def disarm(self):
 		disarmPacket = struct.pack('B', self.vehicleNumber)
