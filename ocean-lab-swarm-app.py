@@ -47,7 +47,9 @@ class SwarmApp(tk.Tk):
 		self.vehicle1Percent = tk.StringVar()
 		self.vehicle2Percent = tk.StringVar()
 		self.vehicle3Percent = tk.StringVar()
-		self.vehicleFlightMode = [tk.StringVar(), tk.StringVar(), tk.StringVar()]
+		self.vehicle1State = tk.StringVar()
+		self.vehicle2State = tk.StringVar()
+		self.vehicle3State = tk.StringVar()
 		self.vehicle1Lat.set("Latitude: ")	
 		self.vehicle2Lat.set("Latitude: ")										
 		self.vehicle3Lat.set("Latitude: ")
@@ -66,9 +68,9 @@ class SwarmApp(tk.Tk):
 		self.vehicle1Percent.set("Battery Percent: ")
 		self.vehicle2Percent.set("Battery Percent: ")
 		self.vehicle3Percent.set("Battery Percent: ")
-		self.vehicleFlightMode[0].set("Flight Mode: Global")
-		self.vehicleFlightMode[1].set("Flight Mode: Global")
-		self.vehicleFlightMode[2].set("Flight Mode: Global")
+		self.vehicle1State.set("State: ")
+		self.vehicle2State.set("State: ")
+		self.vehicle3State.set("State: ")
 
 		#setup the serial port
 		try:
@@ -189,8 +191,7 @@ class SwarmApp(tk.Tk):
 				#	print("bad payload information")
 			elif messageID == 12:
 				#handle power packet
-				print("got power packet")
-				#try: 
+				print("got power packet") 
 				voltage = struct.unpack('H', payload[3] + payload[4])
 				current = struct.unpack('h', payload[5] + payload[6])
 				percentage = struct.unpack('b', payload[7])
@@ -211,6 +212,20 @@ class SwarmApp(tk.Tk):
 					self.vehicle3Voltage.set("Voltage: %.2fV" %voltageFloat)
 					self.vehicle3Current.set("Current: %.2fA" %currentFloat)
 					self.vehicle3Percent.set("Battery Percent: %i" %percentage[0])
+
+			elif messageID == 15:
+				print ("got state packet")
+				state = struct.unpack('B', payload[3])
+				stateList = ['Landed', 'Ready', 'Take Off', 'Taking Off', 'Holding', 'Waypoint', \
+							'2D Vector', '3D Vector', 'Heading to LZ', 'Landing', 'RC Control', 'Changing Altitude']
+
+				if droneID == 1:
+					self.vehicle1State.set("State: " + stateList[state[0]])
+				if droneID == 2:
+					self.vehicle2State.set("State: " + stateList[state[0]])
+				if droneID == 3:
+					self.vehicle3State.set("State: " + stateList[state[0]])
+
 
 				#except:
 				#	print("bad payload information")
@@ -358,6 +373,8 @@ class StartPage(tk.Frame):
 		vehicle1LongLabel.grid(row=5, column=1, sticky=tk.W)
 		vehicle1LatLabel = tk.Label(status1Container, textvariable=controller.vehicle1Lat, font = LARGE_FONT)
 		vehicle1LatLabel.grid(row=6, column=1, sticky=tk.W)
+		vehicle1StateLabel = tk.Label(status1Container, textvariable=controller.vehicle1State, font = LARGE_FONT)
+		vehicle1StateLabel.grid(row=7, column=1, sticky=tk.W)
 
 
 		#create data status update section
@@ -379,6 +396,8 @@ class StartPage(tk.Frame):
 		vehicle2LongLabel.grid(row=5, column=1, sticky=tk.W)
 		vehicle2LatLabel = tk.Label(status2Container, textvariable=controller.vehicle2Lat, font = LARGE_FONT)
 		vehicle2LatLabel.grid(row=6, column=1, sticky=tk.W)
+		vehicle2StateLabel = tk.Label(status2Container, textvariable=controller.vehicle2State, font = LARGE_FONT)
+		vehicle2StateLabel.grid(row=7, column=1, sticky=tk.W)
 
 		#create data status update section
 		status3Container = tk.Frame(statusContainer, width=150, height=500)
@@ -400,7 +419,8 @@ class StartPage(tk.Frame):
 		vehicle3LongLabel.grid(row=5, column=1, sticky=tk.W)
 		vehicle3LatLabel = tk.Label(status3Container, textvariable=controller.vehicle3Lat, font = LARGE_FONT)
 		vehicle3LatLabel.grid(row=6, column=1, sticky=tk.W)
-
+		vehicle3StateLabel = tk.Label(status3Container, textvariable=controller.vehicle3State, font = LARGE_FONT)
+		vehicle3StateLabel.grid(row=7, column=1, sticky=tk.W)
 
 
 		#####Position Controls#######################
@@ -591,13 +611,14 @@ class vehicleCommands():
 		self.eLandID = 3
 		self.holdID = 4
 		self.manualID = 5
-		self.NSMoveID = 7
-		self.EWMoveID = 6
-		self.vectorID = 9
 		self.altID = 10
 		self.localityID = 11
 		self.powerID = 12
 		self.disarmID = 13
+		self.vectorID = 14
+		self.stateID = 15
+		self.startID = 16
+
 
 
 	def launch(self):
@@ -623,7 +644,7 @@ class vehicleCommands():
 
 	def arm(self):
 		armPacket = struct.pack('B', self.vehicleNumber)
-		armPacket += struct.pack('B', self.armID)
+		armPacket += struct.pack('B', self.startID)
 		armPacket += struct.pack('B', self.senderID)
 		self.sendPacket(armPacket, 3)
 		print("landing vehicle: ")
@@ -642,6 +663,9 @@ class vehicleCommands():
 		self.sendPacket(holdPacket, 3)
 
 	def vector(self, heading, magnitude, timeout):
+		heading = int(heading*100)
+		timeout = int(timeout*1000)
+		magnitude = int(magnitude*1000)
 		vectorPacket = struct.pack('B', self.vehicleNumber)
 		vectorPacket += struct.pack('B', self.vectorID)
 		vectorPacket += struct.pack('B', self.senderID)
@@ -655,9 +679,10 @@ class vehicleCommands():
 		altPacket = struct.pack('B', self.vehicleNumber)
 		altPacket += struct.pack('B', self.altID)
 		altPacket += struct.pack('B', self.senderID)
-		altPacket += struct.pack('H', altitude)
+		altPacket += struct.pack('f', float(altitude))
+		print(altPacket) 
 		print("sending alt packet")
-		self.sendPacket(altPacket, 5)
+		self.sendPacket(altPacket, 7)
 
 	def disarm(self):
 		disarmPacket = struct.pack('B', self.vehicleNumber)
@@ -680,11 +705,11 @@ class vehicleCommands():
 		packet += struct.pack('H', CRC)
 		EOP = 3
 		packet += struct.pack('B', EOP)
-		try:
-			self.serialObject.write(packet)
-			print("Sending Packet: " + packet)
-		except:
-			print("could not send serial")
+		#try:
+		self.serialObject.write(packet)
+		#print("Sending Packet: " + packet)
+		#except:
+		#	print("could not send serial")
 		print("packet")
 		
 
