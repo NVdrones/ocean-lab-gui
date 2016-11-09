@@ -1,17 +1,24 @@
-import tkinter as tk
-from tkinter import ttk
+try:
+	#Python 3
+	import tkinter as tk
+	from tkinter import ttk
+	import queue
+except Exception:
+	#Python 2
+	import Tkinter as tk
+	import ttk
+	from multiprocessing import Queue as queue
 import sys
 import glob
 import serial as serial
 import atexit
-import struct 
+import struct
 from PyCRC.CRCCCITT import CRCCCITT
-import queue
 
 LARGE_FONT = ("Verdana", 8)
 
 class SwarmApp(tk.Tk):
-	
+
 	def __init__(self, *args, **kwargs):
 		#start tkinter
 		tk.Tk.__init__(self, *args, **kwargs)
@@ -19,8 +26,10 @@ class SwarmApp(tk.Tk):
 		#create a container to fit all the pages into
 		container = tk.Frame(self)
 		#make the window size 1000px by 800px
+
 		self.geometry('850x600')
 		#fix the window size so that it cannot be resized 
+
 		self.resizable(width=False, height=False)
 		#fill the container to the entire window size
 		container.pack(side="top", fill="both", expand = True)
@@ -50,8 +59,8 @@ class SwarmApp(tk.Tk):
 		self.vehicle1State = tk.StringVar()
 		self.vehicle2State = tk.StringVar()
 		self.vehicle3State = tk.StringVar()
-		self.vehicle1Lat.set("Latitude: ")	
-		self.vehicle2Lat.set("Latitude: ")										
+		self.vehicle1Lat.set("Latitude: ")
+		self.vehicle2Lat.set("Latitude: ")
 		self.vehicle3Lat.set("Latitude: ")
 		self.vehicle1Long.set("Longitude: ")
 		self.vehicle2Long.set("Longitude: ")
@@ -106,7 +115,7 @@ class SwarmApp(tk.Tk):
 		if self.uart.is_open:
 			self.uart.close()
 			print("closed serial port")
-		else: 
+		else:
 			print("no serial port needed to be closed")
 
 	def readByte(self):
@@ -119,18 +128,18 @@ class SwarmApp(tk.Tk):
 		#only check for a valid packet if data is in the buffer
 		if len(self.serialBuffer) >= 1:
 			#check for start of packet A
-			SOPA = struct.unpack('B', self.serialBuffer[0])			
+			SOPA = struct.unpack('B', self.serialBuffer[0])
 			if SOPA[0] != 172:
 				print("Bad SOPA: %x" %SOPA[0])
 				#if packet is not valid remove data from buffer
 				del self.serialBuffer[0]
-			#if start of packet A was present look for 
+			#if start of packet A was present look for
 			#start of packet B if there are 2 bytes present
 			elif len(self.serialBuffer) >= 2:
 				#check for start of packet B
 				SOPB = struct.unpack('B', self.serialBuffer[1])
 				if SOPB[0] != 50:
-					print("Bad SOPB: ") 
+					print("Bad SOPB: ")
 					#if packet is not valid remove all checked data
 					del self.serialBuffer[0:1]
 				#if start of packet was valid look to see if length data is present
@@ -153,7 +162,7 @@ class SwarmApp(tk.Tk):
 							#remove packet from buffer
 							del self.serialBuffer[0:(8+length[0])]
 
-						#if it was a bad packet delete the entire data worth of the 
+						#if it was a bad packet delete the entire data worth of the
 						else:
 							del self.serialBuffer[0:(8 + length[0])]
 							print("bad end of packet character %x" %EOP[0])
@@ -172,26 +181,27 @@ class SwarmApp(tk.Tk):
 				latitude = struct.unpack('i', payload[3] + payload[4] + payload[5] + payload[6])
 				longitude = struct.unpack('i', payload[7] + payload[8] + payload[9] + payload[10])
 				altitude = struct.unpack('I', payload[11] + payload[12] + payload[13] + payload[14])
+
 				latitudeFloat = latitude[0]/10000000.0
 				longitudeFloat = longitude[0]/10000000.0
 				altitudeFloat = altitude[0]/1000.0
 				if droneID == 1:
-					self.vehicle1Lat.set("Latitude: %f" %latitudeFloat)	
+					self.vehicle1Lat.set("Latitude: %f" %latitudeFloat)
 					self.vehicle1Long.set("Longitude: %f " %longitudeFloat)
 					self.vehicle1Alt.set("Altitude: %.1fm" %altitudeFloat)
 				elif droneID == 2:
-					self.vehicle2Lat.set("Latitude: %f" %latitudeFloat)	
-					self.vehicle2Long.set("Longitude: %f" %longitudeFloat)	
-					self.vehicle2Alt.set("Altitude: %.1fm" %altitudeFloat)	
+					self.vehicle2Lat.set("Latitude: %f" %latitudeFloat)
+					self.vehicle2Long.set("Longitude: %f" %longitudeFloat)
+					self.vehicle2Alt.set("Altitude: %.1fm" %altitudeFloat)
 				elif droneID == 3:
-					self.vehicle3Lat.set("Latitude: %f" %latitudeFloat)	
-					self.vehicle3Long.set("Longitude: %f" %longitudeFloat)	
-					self.vehicle3Alt.set("Altitude: %.1fm" %altitudeFloat)	
+					self.vehicle3Lat.set("Latitude: %f" %latitudeFloat)
+					self.vehicle3Long.set("Longitude: %f" %longitudeFloat)
+					self.vehicle3Alt.set("Altitude: %.1fm" %altitudeFloat)
 				#except:
 				#	print("bad payload information")
 			elif messageID == 12:
 				#handle power packet
-				print("got power packet") 
+				print("got power packet")
 				voltage = struct.unpack('H', payload[3] + payload[4])
 				current = struct.unpack('h', payload[5] + payload[6])
 				percentage = struct.unpack('b', payload[7])
@@ -232,10 +242,10 @@ class SwarmApp(tk.Tk):
 
 
 
-					
+
 
 class StartPage(tk.Frame):
-	
+
 	def __init__(self, parent, controller):
 		self.controller = controller
 
@@ -248,7 +258,7 @@ class StartPage(tk.Frame):
 		tk.Frame.__init__(self, parent)
 
 
-		
+
 		##########create header container###################################
 		headerWidget = tk.Frame(self, width=1000, height=400)
 		headerWidget.pack(fill=tk.X)
@@ -348,7 +358,7 @@ class StartPage(tk.Frame):
 		disarmButton3 = tk.Button(commandButtonWidget3, text = "Disarm", font = LARGE_FONT, command = self.v3Commands.disarm, height = 1, width = 15)
 		disarmButton3.grid(row=7, column=1)
 
-		
+
 
 		#create data status update section
 		statusContainer = tk.Frame(self, width=1000, height=500)
@@ -543,12 +553,12 @@ class StartPage(tk.Frame):
 
 
 
-		
+
 
 	def openPort(self, event):
 		'''This gets executed when the serial drop
-		down menu is updated.  It closes all serial 
-		ports, and opens the serial object on the new 
+		down menu is updated.  It closes all serial
+		ports, and opens the serial object on the new
 		Serial Port Number'''
 		#fetch the updated port number
 		portName = self.serialPort.get()
@@ -597,7 +607,7 @@ class StartPage(tk.Frame):
 
 
 class vehicleCommands():
-	
+
 
 	def __init__(self, vehicleNumber, serialObject, controller):
 		self.senderID = 0
@@ -680,7 +690,7 @@ class vehicleCommands():
 		altPacket += struct.pack('B', self.altID)
 		altPacket += struct.pack('B', self.senderID)
 		altPacket += struct.pack('f', float(altitude))
-		print(altPacket) 
+		print(altPacket)
 		print("sending alt packet")
 		self.sendPacket(altPacket, 7)
 
@@ -711,7 +721,7 @@ class vehicleCommands():
 		#except:
 		#	print("could not send serial")
 		print("packet")
-		
+
 
 app = SwarmApp()
 while 1:
