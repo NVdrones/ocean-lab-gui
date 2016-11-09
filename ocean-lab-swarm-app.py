@@ -8,7 +8,7 @@ import struct
 from PyCRC.CRCCCITT import CRCCCITT
 import queue
 
-LARGE_FONT = ("Verdana", 10)
+LARGE_FONT = ("Verdana", 8)
 
 class SwarmApp(tk.Tk):
 	
@@ -19,7 +19,7 @@ class SwarmApp(tk.Tk):
 		#create a container to fit all the pages into
 		container = tk.Frame(self)
 		#make the window size 1000px by 800px
-		self.geometry('1000x800')
+		self.geometry('850x600')
 		#fix the window size so that it cannot be resized 
 		self.resizable(width=False, height=False)
 		#fill the container to the entire window size
@@ -432,7 +432,7 @@ class StartPage(tk.Frame):
 
 		#altitude Entry
 		alt1Label = tk.Label(position1Container, text="Vehicle 1 Altitude (m)", font = LARGE_FONT)
-		alt1Label.grid(row=0, column=1, padx = (15, 10), pady = (50, 0), sticky = tk.W)
+		alt1Label.grid(row=0, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
 		self.altitude1Entry = tk.Entry(position1Container)
 		self.altitude1Entry.grid(row=1, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
 		altitude1Button = tk.Button(position1Container, text = "Go to Altitude", font = LARGE_FONT, command = lambda: self.altitude(1), height = 1, width = 15)
@@ -440,7 +440,7 @@ class StartPage(tk.Frame):
 
 		#vector Entry
 		heading1Label = tk.Label(position1Container, text="Vehicle 1 Heading (Deg)", font = LARGE_FONT)
-		heading1Label.grid(row=3, column=1, padx = (15, 10), pady = (40, 0), sticky = tk.W)
+		heading1Label.grid(row=3, column=1, padx = (15, 10), pady = (10, 0), sticky = tk.W)
 		self.heading1Entry = tk.Entry(position1Container)
 		self.heading1Entry.grid(row=4, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
 		mag1Label = tk.Label(position1Container, text="Vehicle 1 Magnitude (m/s)", font = LARGE_FONT)
@@ -459,7 +459,7 @@ class StartPage(tk.Frame):
 
 		#altitude Entry
 		alt2Label = tk.Label(position2Container, text="Vehicle 2 Altitude (m)", font = LARGE_FONT)
-		alt2Label.grid(row=0, column=1, padx = (15, 10), pady = (50, 0), sticky = tk.W)
+		alt2Label.grid(row=0, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
 		self.altitude2Entry = tk.Entry(position2Container)
 		self.altitude2Entry.grid(row=1, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
 		altitude2Button = tk.Button(position2Container, text = "Go to Altitude", font = LARGE_FONT, command = lambda: self.altitude(2), height = 1, width = 15)
@@ -467,7 +467,7 @@ class StartPage(tk.Frame):
 
 		#vector Entry
 		heading2Label = tk.Label(position2Container, text="Vehicle 2 Heading (Deg)", font = LARGE_FONT)
-		heading2Label.grid(row=3, column=1, padx = (15, 10), pady = (40, 0), sticky = tk.W)
+		heading2Label.grid(row=3, column=1, padx = (15, 10), pady = (10, 0), sticky = tk.W)
 		self.heading2Entry = tk.Entry(position2Container)
 		self.heading2Entry.grid(row=4, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
 		mag2Label = tk.Label(position2Container, text="Vehicle 2 Magnitude (m/s)", font = LARGE_FONT)
@@ -486,7 +486,7 @@ class StartPage(tk.Frame):
 
 		#altitude Entry
 		alt3Label = tk.Label(position3Container, text="Vehicle 3 Altitude (m)", font = LARGE_FONT)
-		alt3Label.grid(row=0, column=1, padx = (15, 10), pady = (50, 0), sticky = tk.W)
+		alt3Label.grid(row=0, column=1, padx = (15, 10), pady = (0, 0), sticky = tk.W)
 		self.altitude3Entry = tk.Entry(position3Container)
 		self.altitude3Entry.grid(row=1, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
 		altitude3Button = tk.Button(position3Container, text = "Go to Altitude", font = LARGE_FONT, command = lambda:self.altitude(3), height = 1, width = 15)
@@ -494,7 +494,7 @@ class StartPage(tk.Frame):
 
 		#vector Entry
 		heading3Label = tk.Label(position3Container, text="Vehicle 3 Heading (Deg)", font = LARGE_FONT)
-		heading3Label.grid(row=3, column=1, padx = (15, 10), pady = (40, 0), sticky = tk.W)
+		heading3Label.grid(row=3, column=1, padx = (15, 10), pady = (10, 0), sticky = tk.W)
 		self.heading3Entry = tk.Entry(position3Container)
 		self.heading3Entry.grid(row=4, column=1, pady = (0, 0), padx = (15, 0), sticky = tk.W)
 		mag3Label = tk.Label(position3Container, text="Vehicle 3 Magnitude (m/s)", font = LARGE_FONT)
