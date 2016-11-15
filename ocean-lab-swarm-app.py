@@ -28,7 +28,7 @@ class SwarmApp(tk.Tk):
 		#make the window size 1000px by 800px
 
 		self.geometry('850x600')
-		#fix the window size so that it cannot be resized 
+		#fix the window size so that it cannot be resized
 
 		self.resizable(width=False, height=False)
 		#fill the container to the entire window size
@@ -227,7 +227,7 @@ class SwarmApp(tk.Tk):
 				print ("got state packet")
 				state = struct.unpack('B', payload[3])
 				stateList = ['Landed', 'Ready', 'Take Off', 'Taking Off', 'Holding', 'Waypoint', \
-							'2D Vector', '3D Vector', 'Heading to LZ', 'Landing', 'RC Control', 'Changing Altitude']
+							'2D Vector', '3D Vector', 'Heading to LZ', 'Landing', 'RC Control', 'Changing Altitude', 'Landing Stabilize']
 
 				if droneID == 1:
 					self.vehicle1State.set("State: " + stateList[state[0]])
