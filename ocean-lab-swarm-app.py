@@ -533,19 +533,19 @@ class StartPage(tk.Frame):
 
 	def vector(self, vehicleNumber):
 		if vehicleNumber == 1:
-			heading = int(self.heading1Entry.get())
-			magnitude = int(self.mag1Entry.get())
-			timeout = int(self.timeout1Entry.get())
+			heading = float(self.heading1Entry.get())
+			magnitude = float(self.mag1Entry.get())
+			timeout = float(self.timeout1Entry.get())
 			self.v1Commands.vector(heading, magnitude, timeout)
 		elif vehicleNumber == 2:
-			heading = int(self.heading2Entry.get())
-			magnitude = int(self.mag2Entry.get())
-			timeout = int(self.timeout2Entry.get())
+			heading = float(self.heading2Entry.get())
+			magnitude =float(self.mag2Entry.get())
+			timeout =float(self.timeout2Entry.get())
 			self.v2Commands.vector(heading, magnitude, timeout)
 		elif vehicleNumber == 3:
-			heading = int(self.heading3Entry.get())
-			magnitude = int(self.mag3Entry.get())
-			timeout = sint(self.timeout3Entry.get())
+			heading =float(self.heading3Entry.get())
+			magnitude =float(self.mag3Entry.get())
+			timeout = float(self.timeout3Entry.get())
 			self.v3Commands.vector(heading, magnitude, timeout)
 
 
